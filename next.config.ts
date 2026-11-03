@@ -1,6 +1,7 @@
 import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
+  output: 'standalone',
   typescript: {
     ignoreBuildErrors: false,
   },
@@ -19,7 +20,7 @@ const nextConfig: NextConfig = {
     ],
   },
   // Ensure the build process handles server-side packages correctly
-  serverExternalPackages: ['handlebars', 'wav'],
+  serverExternalPackages: ['handlebars', 'wav', 'genkit', '@genkit-ai/google-genai'],
   experimental: {
     serverActions: {
       bodySizeLimit: '10mb',

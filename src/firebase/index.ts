@@ -30,9 +30,9 @@ export function initializeFirebase(): FirebaseServices {
   // If API key is missing, we use a dummy config to allow initialization but auth will fail gracefully later
   const configToUse = firebaseConfig.apiKey ? firebaseConfig : { 
     apiKey: "missing", 
-    projectId: "studio-291643778",
-    authDomain: "studio-291643778.firebaseapp.com",
-    storageBucket: "studio-291643778.appspot.com",
+    projectId: "demo-estateagent-studio",
+    authDomain: "demo-estateagent-studio.firebaseapp.com",
+    storageBucket: "demo-estateagent-studio.appspot.com",
     messagingSenderId: "000000000000",
     appId: "0:000000000000:web:0000000000000000000000"
   };

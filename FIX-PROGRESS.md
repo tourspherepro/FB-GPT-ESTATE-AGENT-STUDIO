@@ -36,3 +36,13 @@ Audit Firebase configuration and permissions; implement tenant and role isolatio
 - Added Firebase emulator security tests and GitHub Actions Java 21 CI workflow.
 - Local TypeScript and production build passed; emulator security tests passed in GitHub Actions run 41737107206; no Firebase deployment.
 - See docs/FIREBASE-SECURITY.md for deployment requirements and outstanding work.
+
+## Staging package (2026-11-03)
+- Created Dockerfile and local-only compose.staging.yml for design/testing VPS.
+- Consolidated Next configuration into next.config.ts; removed conflicting next.config.mjs.
+- Node 22 standalone production build passed; .next/standalone/server.js created and launched on Windows at port 3004.
+- Added /api/health: verified HTTP 503 setup_required while Firebase/Gemini config are missing.
+- Updated .env.example: GENKIT uses GEMINI_API_KEY, Firebase web config must be present at image build time.
+- Testing VPS SSH failed with Permission denied (publickey), including alternate key; no VPS deployment performed.
+- Firebase CLI is not authenticated on Windows, and Docker Desktop daemon is not running; Docker image not built.
+- See docs/STAGING-DEPLOYMENT.md for exact deployment commands and blockers.
