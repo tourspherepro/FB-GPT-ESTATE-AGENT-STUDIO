@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ArrowLeft, Upload, Pencil, X, Loader2, Copy, AlertCircle, ShoppingCart, Trees, Search, ShieldCheck, XCircle, RotateCcw, Save, Wand2, Repeat, Home } from 'lucide-react';
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
@@ -1127,8 +1127,8 @@ export default function EaAnalysePage() {
     setMeasurements(project.measurements);
     setRoomDescriptions(project.roomDescriptions || []);
     setSelectedEpc(project.epcData);
-    setConservationResult(project.conservationData);
-    setValuationReport(project.valuationReport);
+    setConservationResult(project.conservationData ?? null);
+    setValuationReport(project.valuationReport ?? null);
     setBrochureContent(project.brochureContent || null);
 
     setGenerationStatus({

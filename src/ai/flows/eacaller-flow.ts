@@ -69,9 +69,7 @@ const bookAppointmentTool = ai.defineTool(
 
 
 // Main Agent Prompt
-const agentPrompt = ai.definePrompt({
-  name: 'eacallerAgent',
-  system: `You are an AI Outbound Calling Agent for an estate agency. Your job is to call leads, qualify them, and book property valuation appointments using the backend booking system.
+const agentSystem = `You are an AI Outbound Calling Agent for an estate agency. Your job is to call leads, qualify them, and book property valuation appointments using the backend booking system.
 
 Speak naturally, clearly, and politely in a friendly UK tone. Keep sentences short. Ask ONE question at a time. Never rush. Never guess information or dates.
 
@@ -157,7 +155,11 @@ Closing: "Perfect. Thank you for your time today. Have a lovely day." END CALL.
 If backend returns "error" or times out:
 Say: "I’m having a little trouble accessing our booking system. I’ll ask one of the team to call you shortly to confirm a time."
 Mark lead as callback_required.
-`,
+`;
+
+const agentPrompt = ai.definePrompt({
+  name: 'eacallerAgent',
+  system: agentSystem,
   tools: [bookAppointmentTool],
   output: {
     format: 'json',
@@ -175,18 +177,20 @@ const callFlow = ai.defineFlow(
   },
   async (input) => {
     const history: MessageData[] = input.conversationHistory.map(turn => ({
-      role: turn.role,
+      role: turn.role === 'agent' ? 'model' : 'user',
       content: [{ text: turn.dialog! }],
     }));
 
     const response = await ai.generate({
-      prompt: `You are calling ${input.leadDetails.leadName} about the property at ${input.leadDetails.propertyAddress}. The agency is ${input.agencyName}. The lead's phone number is ${input.leadDetails.phoneNumber}.`,
-      history,
-      model: agentPrompt,
+      prompt: `You are calling ${input.leadDetails.leadName} about the property at ${input.leadDetails.propertyAddress}. The agency is ${input.agencyName}. The lead's phone number is ${input.leadDetails.phoneNumber}.` + '\nConversation history: ' + JSON.stringify(history),
+
+      model: 'googleai/gemini-2.5-flash',
+      system: agentSystem,
+      output: { schema: ConversationTurnSchema },
     });
     
     const outputTurns: ConversationTurn[] = [];
-    const agentResponse = response.output() as ConversationTurn | undefined;
+    const agentResponse = response.output as ConversationTurn | undefined;
 
     if (!agentResponse) {
         // This case handles when the model doesn't return valid JSON.
@@ -213,26 +217,22 @@ const callFlow = ai.defineFlow(
         
         const toolResponse = await toolRequest.run();
 
-        // Create a new history including the agent's turn and the tool's response
+        // Record the model response; the booking result is provided explicitly to the next prompt.
         const newHistory: MessageData[] = [
             ...history,
-            response.message, // The message that contained the tool request
-            {
-                role: 'tool',
-                content: [{
-                    tool_response: { name: toolRequest.name, output: toolResponse }
-                }]
-            }
+            { role: 'model', content: [{ text: agentResponse.voice_output ?? '' }] },
         ];
-        
+
         // Generate the final response from the agent after getting the booking result
         const finalResponse = await ai.generate({
-            prompt: `You are calling ${input.leadDetails.leadName}. The booking result was: ${toolResponse}.`,
-            history: newHistory,
-            model: agentPrompt,
+            prompt: `You are calling ${input.leadDetails.leadName}. The booking result was: ${toolResponse}.` + '\nConversation history: ' + JSON.stringify(newHistory),
+
+            model: 'googleai/gemini-2.5-flash',
+      system: agentSystem,
+      output: { schema: ConversationTurnSchema },
         });
         
-        const finalAgentTurn = finalResponse.output() as ConversationTurn | undefined;
+        const finalAgentTurn = finalResponse.output as ConversationTurn | undefined;
         if(finalAgentTurn?.voice_output) {
           outputTurns.push(finalAgentTurn);
         }

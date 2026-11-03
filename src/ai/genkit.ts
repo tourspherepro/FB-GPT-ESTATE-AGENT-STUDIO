@@ -23,14 +23,14 @@ const getAiInstance = () => {
           return disabledFlow;
         },
       }
-    ) as any;
+     ) as ReturnType<typeof genkit>;
 
     return {
       ai: disabledAi,
       googleAI: (() => ({
         name: 'google-ai-disabled',
         __plugin: 'google-ai-disabled',
-      })) as any,
+      })) as unknown as ReturnType<typeof googleAIPlugin>,
     };
   }
 

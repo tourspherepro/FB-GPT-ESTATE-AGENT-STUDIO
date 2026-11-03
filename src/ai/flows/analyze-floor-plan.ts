@@ -78,8 +78,8 @@ const analyzeFloorPlanFlow = ai.defineFlow(
     }
 
     let errorMessage = "The AI failed to analyze the floor plan.";
-    if (response.finishReason !== 'STOP' && response.candidates?.[0]?.finishMessage) {
-        errorMessage += ` Reason: ${response.candidates[0].finishMessage}`;
+    if (response.finishReason !== 'stop') {
+      errorMessage += ` Reason: ${response.finishReason}`;
     } else {
         errorMessage += " This may be due to an unclear image, safety filters, or an internal error.";
     }

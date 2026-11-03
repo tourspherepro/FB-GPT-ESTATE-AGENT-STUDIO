@@ -54,21 +54,21 @@ const genericChatFlow = ai.defineFlow(
         const text = response.text;
         const finishReason = response.finishReason;
 
-        if (finishReason !== 'STOP' || !text) {
+        if (finishReason !== 'stop' || !text) {
              return {
-                role: 'model',
+                role: 'model' as const,
                 content: "I'm sorry, I couldn't generate a response. The response may have been blocked due to safety settings. Please try again with a different prompt.",
             };
         }
         
         return {
-            role: 'model',
+            role: 'model' as const,
             content: text,
         };
     } catch (error) {
         console.error('Error in genericChatFlow:', error);
         return {
-            role: 'model',
+            role: 'model' as const,
             content: "I'm sorry, an error occurred while trying to generate a response. The AI service may be temporarily unavailable.",
         };
     }

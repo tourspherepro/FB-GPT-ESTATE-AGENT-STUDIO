@@ -73,11 +73,10 @@ const rewritePrompt = ai.defineFlow(
   },
   async ({ prompt, signal }) => {
     const llmResponse = await ai.generate({
-      model: googleAI.model('gemini-2.5-flash'),
+      model: 'googleai/gemini-2.5-flash',
       prompt: `You are a creative director. Enhance the following prompt for an AI image or video generator. Expand on scene description, camera angles, lighting, mood, and movement. Output only the final, generation-ready prompt.
       
       Original prompt: "${prompt}"`,
-      options: { signal },
     });
     return llmResponse.text;
   }

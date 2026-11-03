@@ -101,11 +101,7 @@ const altoUpdateFlow = ai.defineFlow(
     outputSchema: AltoUpdateOutputSchema,
   },
   async (input) => {
-    const { output } = await ai.generate({
-        prompt: altoAgentPrompt,
-        model: googleAI.model('gemini-2.5-flash'),
-        input,
-    });
+    const { output } = await altoAgentPrompt(input);
     
     if (!output) {
       throw new Error("The AI agent failed to generate an update plan for Alto.");

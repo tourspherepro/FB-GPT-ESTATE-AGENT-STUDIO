@@ -2,7 +2,7 @@
 'use client';
 
 import { AppLayout } from '@/components/app-layout';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Orbit, FileJson, Copy, Loader2 } from 'lucide-react';
 import dynamic from 'next/dynamic';

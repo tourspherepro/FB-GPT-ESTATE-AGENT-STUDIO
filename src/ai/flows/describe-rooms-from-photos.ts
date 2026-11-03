@@ -82,8 +82,8 @@ Your output must be a JSON object containing a 'descriptions' array, where each 
     }
 
     let errorMessage = "The AI failed to generate room descriptions.";
-    if (response.finishReason !== 'STOP' && response.candidates && response.candidates.length > 0 && response.candidates[0].finishMessage) {
-        errorMessage += ` Reason: ${response.candidates[0].finishMessage}`;
+    if (response.finishReason !== 'stop') {
+      errorMessage += ` Reason: ${response.finishReason}`;
     } else {
         errorMessage += " This may be due to the images provided, safety filters, or an internal error.";
     }

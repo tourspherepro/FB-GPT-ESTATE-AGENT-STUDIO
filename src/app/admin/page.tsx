@@ -539,7 +539,7 @@ export default function AdminPage() {
         if (!ctaContent || !db) return;
         setIsCtaLoading(true);
         const docRef = doc(db, 'ctaSection', 'main');
-        updateDoc(docRef, ctaContent)
+        updateDoc(docRef, { ...ctaContent })
             .then(() => toast({ title: 'Success', description: 'CTA section updated.' }))
             .catch(e => errorEmitter.emit('permission-error', new FirestorePermissionError({ path: 'ctaSection/main', operation: 'update', requestResourceData: ctaContent })))
             .finally(() => setIsCtaLoading(false));
@@ -1083,7 +1083,7 @@ export default function AdminPage() {
                                                 <div className="flex items-center gap-2">
                                                     <Checkbox
                                                         id={`select-all-${editedUser.uid}`}
-                                                        checked={areAllToolsSelected}
+                                                        checked={!!areAllToolsSelected}
                                                         onCheckedChange={(checked) => handleAllPermissionsChange(!!checked)}
                                                     />
                                                     <Label htmlFor={`select-all-${editedUser.uid}`} className="text-sm font-normal">Select All</Label>

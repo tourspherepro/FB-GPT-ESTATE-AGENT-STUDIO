@@ -18,6 +18,6 @@ const PanoramaViewer = dynamic(() => import('@/components/panorama-viewer'), {
 // This page is dedicated to showing the 360 tour in fullscreen.
 export default function TourViewerPage() {
   return (
-    <PanoramaViewer />
+    <PanoramaViewer imageUrl="" />
   );
 }

@@ -143,7 +143,7 @@ export default function EaValuationPage() {
               const options = order.map(key => {
                 const value = data[key];
                 return value ? { value, label: `${value} (${key.replace(/_/g, ' ')})`, key } : null;
-              }).filter((opt): opt is { value: string, label: string, key: string } => opt !== null);
+              }).filter((opt): opt is { value: string, label: string, key: keyof PostcodeData } => opt !== null);
 
               setPostcodeOptions(options);
 

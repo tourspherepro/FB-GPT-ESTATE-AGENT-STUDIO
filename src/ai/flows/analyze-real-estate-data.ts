@@ -190,9 +190,9 @@ Analyze the provided photos to create the content.
             propertyAdvert = adResult.output;
         } else {
             let errorMessage = "Could not generate property advert.";
-            if (adResult.finishReason !== 'STOP' && adResult.candidates && adResult.candidates.length > 0 && adResult.candidates[0].finishMessage) {
-                errorMessage += ` Reason: ${adResult.candidates[0].finishMessage}`;
-            } else {
+            if (adResult.finishReason !== 'stop') {
+      errorMessage += ` Reason: ${adResult.finishReason}`;
+    } else {
                 errorMessage += " The AI returned an empty or invalid response, which may be due to safety filters or an internal model error.";
             }
             throw new Error(errorMessage);
