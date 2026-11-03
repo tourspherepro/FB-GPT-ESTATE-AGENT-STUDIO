@@ -34,3 +34,9 @@ This branch contains **local, un-deployed** security rules and code changes. Do 
 - Local Windows host did not have Java available; rules emulator tests must be run in CI or a Java-enabled environment.
 - Existing published URLs may continue to work using download tokens independently of Storage rules.
 - Firebase Auth, storage uploads, subscription role changes and tenant onboarding have not been end-to-end exercised.
+
+## Automated verification
+- GitHub Actions run 41737107206: SUCCESS (npm ci, TypeScript, production build, Firestore emulator security tests).
+- https://github.com/tourspherepro/FB-GPT-ESTATE-AGENT-STUDIO/actions/runs/41737107206
+- Storage rule compilation was exercised by emulator startup; storage access cases need further dedicated tests.
+

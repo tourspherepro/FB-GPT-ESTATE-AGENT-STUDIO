@@ -34,5 +34,5 @@ Audit Firebase configuration and permissions; implement tenant and role isolatio
 - Restricted Outlook command API to provisioned tenant plus outlookVoice custom claim.
 - Set Firebase CLI project default to demo-estateagent-studio, not the imported upstream project.
 - Added Firebase emulator security tests and GitHub Actions Java 21 CI workflow.
-- Local TypeScript and production build passed; emulator tests pending CI; no Firebase deployment.
+- Local TypeScript and production build passed; emulator security tests passed in GitHub Actions run 41737107206; no Firebase deployment.
 - See docs/FIREBASE-SECURITY.md for deployment requirements and outstanding work.
