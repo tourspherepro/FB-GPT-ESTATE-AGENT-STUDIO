@@ -82,13 +82,15 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          <Button
-            asChild
-            variant="outline"
-            className="mt-4 h-12 w-full rounded-full border-sky-500 bg-white text-sky-700 font-semibold hover:bg-sky-50"
-          >
-            <Link href="/dashboard">Go to System Dashboard</Link>
-          </Button>
+          <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <Button asChild variant="outline" className="h-12 rounded-full border-sky-500 bg-white text-sky-700 font-semibold hover:bg-sky-50">
+              <Link href="/preview/user">View User Dashboard</Link>
+            </Button>
+            <Button asChild variant="outline" className="h-12 rounded-full border-sky-500 bg-white text-sky-700 font-semibold hover:bg-sky-50">
+              <Link href="/preview/admin">View Admin Dashboard</Link>
+            </Button>
+          </div>
+          <p className="mt-2 text-center text-xs text-slate-500">Preview only — live dashboards require sign-in.</p>
 
           <div className="mt-10 text-center">
             <p className="text-sm font-medium text-slate-600">
