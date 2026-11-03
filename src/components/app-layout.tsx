@@ -22,9 +22,9 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                   <div className="container mx-auto flex flex-wrap items-center justify-between gap-3">
                     <span className="font-semibold">LOCAL DESIGN MODE — Actual interface, sample profile, no live data or saving</span>
                     <div className="flex flex-wrap gap-4 font-semibold underline">
-                      <Link href="/dashboard?design=user">User dashboard</Link>
-                      <Link href="/admin?design=admin">Admin dashboard</Link>
-                      <Link href="/login">Login</Link>
+                      <a href="/dashboard?design=user">User dashboard</a>
+                      <a href="/admin?design=admin">Admin dashboard</a>
+                      <a href="/login">Login</a>
                     </div>
                   </div>
                 </div>
