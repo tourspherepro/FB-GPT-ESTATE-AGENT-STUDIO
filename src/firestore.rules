@@ -1,0 +1,56 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // PUBLIC CONTENT - Allow anyone to read
+    match /site_content/{docId} {
+      allow get, list: if true;
+      allow write: if isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'superadmin'];
+    }
+    
+    match /pricingPlans/{planId} {
+       allow get, list: if true;
+       allow write: if isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'superadmin'];
+    }
+
+    match /ctaSection/{docId} {
+       allow get, list: if true;
+       allow write: if isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'superadmin'];
+    }
+
+    match /settings_{collection}/{docId} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'superadmin'];
+    }
+
+    // USER PROFILES
+    match /users/{userId} {
+      allow get: if isOwner(userId) || (isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'superadmin']);
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId) || (isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'superadmin']);
+      allow list: if isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'superadmin'];
+    }
+
+    // USER PROJECTS
+    match /projects/{projectId} {
+      allow create: if isSignedIn();
+      allow read, update, delete: if (resource.data.userId == request.auth.uid) || (isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'superadmin']);
+      allow list: if isSignedIn();
+    }
+
+    // Default deny all other collections
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

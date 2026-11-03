@@ -1,0 +1,396 @@
+diff --git a/node_modules/react-konva/es/ReactKonvaCore.js b/node_modules/react-konva/es/ReactKonvaCore.js
+index 9a11277..169e969 100644
+--- a/node_modules/react-konva/es/ReactKonvaCore.js
++++ b/node_modules/react-konva/es/ReactKonvaCore.js
+@@ -1,6 +1,5 @@
+ import React from 'react';
+-import { unstable_renderSubtreeIntoContainer, unmountComponentAtNode } from 'react-dom';
+-import { __SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED as ReactInternals } from 'react-dom';
++import { createRoot, unmountComponentAtNode } from 'react-dom/client';
+ import Konva from 'konva';
+ 
+ const REACT_VERSION = parseInt(React.version.split('.')[0], 10);
+@@ -160,11 +159,10 @@ function usePrevious(value) {
+   return ref.current;
+ }
+ 
+-const KonvaRenderer = ReactInternals.Events[0];
+-
+ let Stage;
+ let Layer;
+ let FastLayer;
++let KonvaRenderer;
+ 
+ function useFilter(node, filter, deps = []) {
+   React.useEffect(() => {
+@@ -213,26 +211,26 @@ function applyNodeProps(instance, props, oldProps = {}) {
+ }
+ 
+ function updatePicture(node) {
+-  var drawingNode =
+-    node.getLayer() ||
+-    node.getStage();
+-  if (!drawingNode) {
+-    return;
++  var drawingNode = node.getLayer() || node.getStage();
++  if(drawingNode) {
++    drawingNode.batchDraw();
+   }
+-  drawingNode.batchDraw();
+ }
+ 
+ var componentCreated = false;
+ 
+ const KonvaFactory = {
+   create: (type, props) => {
++    const view = new Konva[type](props);
++    view._applyProps = applyNodeProps;
++    view.updatePicture = updatePicture;
++    return view;
++  },
++  createRoot: () => {
+     return KonvaRenderer.createContainer(
+       new Konva.Stage({
+         width: window.innerWidth,
+         height: window.innerHeight,
+       }),
+-      false,
+-      false
+     );
+   },
+ };
+@@ -253,10 +251,28 @@ function useStrictMode(forwardedRef) {
+ 
+ function useKonva(forwardedRef, type) {
+   const konvaNode = React.useRef(null);
++  KonvaRenderer = {
++    createContainer: (stage) => {
++      let root = createRoot(stage.content);
++      stage.setContainer(root);
+      
+-  if (konvaNode.current === null) {
+-    konvaNode.current = KonvaFactory.create(type);
+-  }
++      return {
++        render(children) {
++          root.render(children);
++        },
++        unmount() {
++          root.unmount();
++        }
++      };
++    },
++  };
+ 
+   React.useImperativeHandle(forwardedRef, () => konvaNode.current, []);
++  
++  if (konvaNode.current === null) {
++    konvaNode.current = KonvaFactory.create(type);
++  }
++  konvaNode.current.setProps(props);
++  konvaNode.current._applyProps(konvaNode.current, props);
++
+ 
+   return konvaNode;
+ }
+@@ -351,14 +367,13 @@ const Stage$1 = React.forwardRef((props, ref) => {
+     React.useLayoutEffect(() => {
+       stageRef.current = new Konva.Stage(props);
+ 
+-      rootRef.current = KonvaFactory.createRoot();
+-      KonvaRenderer.updateContainer(
+-        <React.Fragment>{props.children}</React.Fragment>,
+-        rootRef.current,
+-        null
+-      );
++      const container = KonvaFactory.createContainer(stageRef.current);
++      rootRef.current = container;
++      rootRef.current.render(
++        <React.Fragment>{props.children}</React.Fragment>
++      )
+       stageRef.current.setContainer(containerRef.current);
+-      applyNodeProps(stageRef.current, props);
++      stageRef.current._applyProps(stageRef.current, props);
+ 
+       return () => {
+         if (stageRef.current === null || rootRef.current === null) {
+@@ -367,7 +382,7 @@ function _classCallCheck(instance, Constructor) {
+         }
+ 
+         unmountComponentAtNode(stageRef.current.getContainer());
+-        rootRef.current = null;
++        // rootRef.current.unmount();
+         stageRef.current.destroy();
+         stageRef.current = null;
+       };
+@@ -375,12 +390,9 @@ function _classCallCheck(instance, Constructor) {
+ 
+   React.useLayoutEffect(() => {
+     if (stageRef.current === null || rootRef.current === null) {
+-      return;
++      return
+     }
+-    KonvaRenderer.updateContainer(
+-      <React.Fragment>{props.children}</React.Fragment>,
+-      rootRef.current,
+-      null
+-    );
++    rootRef.current.render(props.children)
+   });
+ 
+   React.useLayoutEffect(() => {
+@@ -388,7 +400,7 @@ function _classCallCheck(instance, Constructor) {
+       return;
+     }
+     const oldProps = oldPropsRef.current;
+-    applyNodeProps(stageRef.current, props, oldProps);
++    stageRef.current._applyProps(stageRef.current, props, oldProps);
+     oldPropsRef.current = props;
+   });
+ 
+diff --git a/node_modules/react-konva/lib/ReactKonvaCore.js b/node_modules/react-konva/lib/ReactKonvaCore.js
+index 9b6910a..04d0263 100644
+--- a/node_modules/react-konva/lib/ReactKonvaCore.js
++++ b/node_modules/react-konva/lib/ReactKonvaCore.js
+@@ -1,9 +1,8 @@
+ 'use strict';
+ 
+ Object.defineProperty(exports, '__esModule', { value: true });
+ 
+-var React = require('react');
+-var reactDom = require('react-dom');
++var React$1 = require('react');
+ var Konva = require('konva');
+ 
+ function _interopDefaultLegacy (e) { return e && typeof e === 'object' && 'default' in e ? e : { 'default': e }; }
+@@ -11,8 +10,8 @@ function _interopDefaultLegacy (e) { return e && typeof e === 'object' && 'def
+ function _interopNamespace(e) {
+   if (e && e.__esModule) return e;
+   var n = Object.create(null);
+-  if (e) {
+-    Object.keys(e).forEach(function (k) {
++  if (e) { Object.keys(e).forEach(function (k) {
+       if (k !== 'default') {
+         var d = Object.getOwnPropertyDescriptor(e, k);
+         Object.defineProperty(n, k, d.get ? d : {
+@@ -21,18 +20,18 @@ function _interopNamespace(e) {
+         });
+       }
+-    });
+-  }
++    }); }
+   n['default'] = e;
+   return Object.freeze(n);
+ }
+ 
+-var React__namespace = /*#__PURE__*/_interopNamespace(React);
++var React__namespace = /*#__PURE__*/_interopNamespace(React$1);
+ var Konva__default = /*#__PURE__*/_interopDefaultLegacy(Konva);
+ 
+ var REACT_VERSION = parseInt(React.version.split('.')[0], 10);
+ 
+-var ReactInternals = reactDom.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED;
++var ReactDOM = require('react-dom/client');
++
+ 
+ var konva = {
+   pixelRatio: 1,
+@@ -179,30 +178,39 @@ function usePrevious(value) {
+   return ref.current;
+ }
+ 
+-var KonvaRenderer = ReactInternals.Events[0];
+-
+ var Stage;
+ var Layer;
+ var FastLayer;
++var KonvaRenderer;
+ 
+ function useFilter(node, filter, deps) {
+-  if (deps === void 0) {
++  if (deps === void 0) { deps = []; }
++  React$1.useEffect(function () {
++    if (node) {
++      node.cache();
++    }
++  }, [node].concat(deps));
++  React$1.useEffect(function () {
++    if (!node || !filter) {
++      return;
++    }
++    node.filters([filter]);
++  }, [node, filter]);
++}
++
++function updatePicture(node) {
++  var drawingNode = node.getLayer() || node.getStage();
++  if (drawingNode) {
++    drawingNode.batchDraw();
++  }
++}
++
++var componentCreated = false;
++var KonvaFactory = {
++  create: function create(type, props) {
++    var view = new Konva__default["default"][type](props);
++    view._applyProps = applyNodeProps;
++    view.updatePicture = updatePicture;
++    return view;
++  },
++  createRoot: function createRoot$1() {
++    return KonvaRenderer.createContainer(new Konva__default["default"].Stage({
++      width: window.innerWidth,
++      height: window.innerHeight
++    }));
++  }
++};
++var CONTEXT_COMPONENT = 'KonvaContext';
++var KonvaContext = React__namespace.createContext(null);
++var useStrictMode = function useStrictMode(forwardedRef) {
++  var konvaNode = React__namespace.useRef(null);
++  var strict = React__namespace.useContext(KonvaContext);
++  React__namespace.useImperativeHandle(forwardedRef, function () {
++    return konvaNode.current;
++  }, []);
++  return [konvaNode, strict];
++};
++
++function useKonva(forwardedRef, type) {
++  var konvaNode = React__namespace.useRef(null);
++  KonvaRenderer = {
++    createContainer: function createContainer(stage) {
++      var root = ReactDOM.createRoot(stage.content);
++      stage.setContainer(root);
++      return {
++        render: function render(children) {
++          root.render(children);
++        },
++        unmount: function unmount() {
++          root.unmount();
++        }
++      };
++    }
++  };
++  React__namespace.useImperativeHandle(forwardedRef, function () {
++    return konvaNode.current;
++  }, []);
++
++  if (konvaNode.current === null) {
++    konvaNode.current = KonvaFactory.create(type);
++  }
++
++  konvaNode.current.setProps(props);
++
++  konvaNode.current._applyProps(konvaNode.current, props);
++
++  return konvaNode;
++}
++
++function createComponent(type, tag) {
++  var konvaComponent = function konvaComponent(props) {
++    var forwardedRef = React__namespace.useRef(null);
++    var node = useKonva(forwardedRef, type);
++    var _React$useState = React__namespace.useState(false),
++        isMounted = _React$useState[0],
++        setIsMounted = _React$useState[1];
++    React__namespace.useEffect(function () {
++      setIsMounted(true);
++    }, []);
++    var _useStrictMode = useStrictMode(forwardedRef),
++        strict = _useStrictMode[1];
++    if (strict) {
++      return React__namespace.createElement(tag, Object.assign({}, props, {
++        ref: forwardedRef,
++        konvaNode: node
++      }), isMounted ? props.children : undefined);
++    }
++    return React__namespace.createElement(tag, Object.assign({}, props, {
++      ref: forwardedRef,
++      konvaNode: node
++    }), props.children);
++  };
++  konvaComponent.displayName = type;
++  return konvaComponent;
++}
++var Stage$1 = React__namespace.forwardRef(function (props, ref) {
++  var containerRef = React__namespace.useRef(null);
++  var stageRef = React__namespace.useRef(null);
++  var rootRef = React__namespace.useRef(null);
++  var oldPropsRef = React__namespace.useRef(props);
++  React__namespace.useImperativeHandle(ref, function () {
++    return stageRef.current;
++  });
++  React__namespace.useLayoutEffect(function () {
++    stageRef.current = new Konva__default["default"].Stage(props);
++    var container = KonvaFactory.createContainer(stageRef.current);
++    rootRef.current = container;
++    rootRef.current.render(React__namespace.createElement(React__namespace.Fragment, null, props.children));
++    stageRef.current.setContainer(containerRef.current);
++    stageRef.current._applyProps(stageRef.current, props);
++    return function () {
++      if (stageRef.current === null || rootRef.current === null) {
++        return;
++      }
++
++      reactDom.unmountComponentAtNode(stageRef.current.getContainer());
++      stageRef.current.destroy();
++      stageRef.current = null;
++    };
++  }, []);
++  React__namespace.useLayoutEffect(function () {
++    if (stageRef.current === null || rootRef.current === null) {
++      return;
++    }
++
++    rootRef.current.render(props.children);
++  });
++  React__namespace.useLayoutEffect(function () {
++    if (stageRef.current === null) {
++      return;
++    }
++
++    var oldProps = oldPropsRef.current;
++    stageRef.current._applyProps(stageRef.current, props, oldProps);
++    oldPropsRef.current = props;
++  });
++  return React__namespace.createElement("div", {
++    ref: containerRef
++  });
++});
++if (!componentCreated) {
++  var components = ['Layer', 'FastLayer', 'Group', 'Label', 'Rect', 'Circle', 'Ellipse', 'Wedge', 'Line', 'Sprite', 'Image', 'Text', 'TextPath', 'Star', 'Ring', 'Arc', 'Tag', 'Path', 'RegularPolygon', 'Arrow', 'Shape', 'Transformer'];
++  var KONVA_NODES = {
++    Stage: Stage$1
++  };
++  components.forEach(function (name) {
++    KONVA_NODES[name] = createComponent(name, 'div');
++  });
++  Stage = KONVA_NODES.Stage;
++  Layer = KONVA_NODES.Layer;
++  FastLayer = KONVA_NODES.FastLayer;
++}
++
++exports.Arc = Arc;
++exports.Arrow = Arrow;
++exports.Circle = Circle;
++exports.Ellipse = Ellipse;
++exports.FastLayer = FastLayer;
++exports.Group = Group;
++exports.Image = Image;
++exports.Label = Label;
++exports.Layer = Layer;
++exports.Line = Line;
++exports.Path = Path;
++exports.Rect = Rect;
++exports.RegularPolygon = RegularPolygon;
++exports.Ring = Ring;
++exports.Shape = Shape;
++exports.Sprite = Sprite;
++exports.Stage = Stage;
++exports.Star = Star;
++exports.Tag = Tag;
++exports.Text = Text;
++exports.TextPath = TextPath;
++exports.Transformer = Transformer;
++exports.Wedge = Wedge;
++exports.useStrictMode = useStrictMode;

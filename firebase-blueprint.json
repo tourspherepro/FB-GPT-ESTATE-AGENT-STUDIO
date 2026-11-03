@@ -1,0 +1,154 @@
+
+{
+  "entities": {
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user of the EA Tools application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the User entity."
+        },
+        "email": {
+          "type": "string",
+          "description": "User's email address.",
+          "format": "email"
+        },
+        "firstName": {
+          "type": "string",
+          "description": "User's first name."
+        },
+        "lastName": {
+          "type": "string",
+          "description": "User's last name."
+        },
+        "isAdmin": {
+          "type": "boolean",
+          "description": "Indicates if the user is an administrator."
+        }
+      },
+      "required": [
+        "id",
+        "email",
+        "firstName",
+        "lastName",
+        "isAdmin"
+      ]
+    },
+    "Tool": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Tool",
+      "type": "object",
+      "description": "Represents a tool available within the EA Tools application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Tool entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the tool (e.g., Floor Plan Maestro)."
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the tool's functionality."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "description"
+      ]
+    },
+    "UserToolAccess": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "UserToolAccess",
+      "type": "object",
+      "description": "Represents the access rights of a user to a specific tool.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the UserToolAccess entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to User. (Relationship: User 1:N UserToolAccess)"
+        },
+        "toolId": {
+          "type": "string",
+          "description": "Reference to Tool. (Relationship: Tool 1:N UserToolAccess)"
+        },
+        "hasAccess": {
+          "type": "boolean",
+          "description": "Indicates whether the user has access to the tool."
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "toolId",
+        "hasAccess"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Stores user profiles. Includes userId as a document ID. The `isAdmin` property is included for simple client-side checks.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/tools/{toolId}",
+        "definition": {
+          "entityName": "Tool",
+          "schema": {
+            "$ref": "#/backend/entities/Tool"
+          },
+          "description": "Stores the definition of each tool available in the EA Tools application.",
+          "params": [
+            {
+              "name": "toolId",
+              "description": "The unique identifier for the tool."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/user_tool_access/{userToolAccessId}",
+        "definition": {
+          "entityName": "UserToolAccess",
+          "schema": {
+            "$ref": "#/backend/entities/UserToolAccess"
+          },
+          "description": "Stores which tools a user has access to.  The `userId` field allows lookup of tools for a specific user, and the `toolId` field represents the tool they have access to.",
+          "params": [
+            {
+              "name": "userToolAccessId",
+              "description": "The unique identifier for the user tool access entry."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore data structure is designed to support the 'EA Tools' application, focusing on user authentication, tool access control, and admin settings. The structure ensures authorization independence by denormalizing necessary access control data and segregates data based on security requirements.  Specifically, the `UserToolAccess` data includes the `userId` and `toolId` allowing for easy querying and management of tool access. Access is managed via denormalization (Authorization Independence) and segregation of admin vs. user data.\n\nThe structure supports QAPs through segregation. Admin-related data (e.g., user tool assignments) resides in a separate collection, ensuring regular users cannot list or access this data. User-owned data (like preferences) is located under the `/users/{userId}` path, enabling efficient and secure listing of resources owned by a specific user without exposing data from other users.\n\nFinally, storing the `isAdmin` flag directly on the user document enables simple reads on the client without requiring a separate admin-only collection or custom claims."
+  }
+}

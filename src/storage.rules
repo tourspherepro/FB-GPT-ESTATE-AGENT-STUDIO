@@ -1,0 +1,53 @@
+
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // Helper function to check for admin role from Firestore
+    function isAdmin() {
+      return request.auth != null &&
+        get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // USER PROFILE IMAGE
+    // Users can read anyone's profile image (if they have the URL).
+    // Users can only write to their own profile image path.
+    match /users/{userId}/profile.jpg {
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // PROJECT UPLOADS (Photos + Floorplans from EA Analyse)
+    // Authenticated users can write to a folder under their own user ID.
+    // Anyone can read these files (as they are for public-facing brochures/listings).
+    match /projects/{userId}/{fileName} {
+       allow read: if true;
+       allow write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // COMPANY LOGOS & BRANDING (Admin Only)
+    // Publicly readable, but only admins can upload/change them.
+    match /logos/{allPaths=**} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /branding/{allPaths=**} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    
+    // PUBLIC 360 PANORAMAS
+    // Allow public read for tours, and authenticated write.
+     match /panoramas/{allPaths=**} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    // Default deny all other paths
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

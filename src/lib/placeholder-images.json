@@ -1,0 +1,58 @@
+{
+  "placeholderImages": [
+    {
+      "id": "user-avatar",
+      "description": "User avatar for header",
+      "imageUrl": "https://picsum.photos/seed/user/100/100",
+      "imageHint": "person face"
+    },
+    {
+      "id": "enhanced-property",
+      "description": "Enhanced property image placeholder",
+      "imageUrl": "https://picsum.photos/seed/enhanced/800/450",
+      "imageHint": "living room"
+    },
+    {
+      "id": "admin-alice-avatar",
+      "description": "Avatar for Alice in admin panel",
+      "imageUrl": "https://picsum.photos/seed/alice/100/100",
+      "imageHint": "woman face"
+    },
+    {
+      "id": "admin-bob-avatar",
+      "description": "Avatar for Bob in admin panel",
+      "imageUrl": "https://picsum.photos/seed/bob/100/100",
+      "imageHint": "man face"
+    },
+    {
+      "id": "admin-charlie-avatar",
+      "description": "Avatar for Charlie in admin panel",
+      "imageUrl": "https://picsum.photos/seed/charlie/100/100",
+      "imageHint": "person face"
+    },
+    {
+      "id": "admin-diana-avatar",
+      "description": "Avatar for Diana in admin panel",
+      "imageUrl": "https://picsum.photos/seed/diana/100/100",
+      "imageHint": "woman face"
+    },
+    {
+      "id": "admin-ethan-avatar",
+      "description": "Avatar for Ethan in admin panel",
+      "imageUrl": "https://picsum.photos/seed/ethan/100/100",
+      "imageHint": "man face"
+    },
+    {
+      "id": "company-logo-placeholder",
+      "description": "Placeholder for company logo",
+      "imageUrl": "https://picsum.photos/seed/logo/128/64",
+      "imageHint": "company logo"
+    },
+    {
+      "id": "allocated-logo-placeholder",
+      "description": "Placeholder for allocated company logos",
+      "imageUrl": "https://picsum.photos/seed/alloc-logo/200/100",
+      "imageHint": "abstract logo"
+    }
+  ]
+}
