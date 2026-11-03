@@ -82,6 +82,14 @@ export default function LoginPage() {
             </Button>
           </form>
 
+          <Button
+            asChild
+            variant="outline"
+            className="mt-4 h-12 w-full rounded-full border-sky-500 bg-white text-sky-700 font-semibold hover:bg-sky-50"
+          >
+            <Link href="/dashboard">Go to System Dashboard</Link>
+          </Button>
+
           <div className="mt-10 text-center">
             <p className="text-sm font-medium text-slate-600">
               Don't have an account? <Link href="/signup" className="text-sky-600 font-bold hover:underline">Sign up</Link>
