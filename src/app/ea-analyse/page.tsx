@@ -1074,7 +1074,7 @@ export default function EaAnalysePage() {
     setIsProjectsLoading(true);
 
     try {
-        const q = query(collection(db, 'projects'));
+        const q = query(collection(db, 'projects'), where('userId', '==', user.uid));
         const snapshot = await getDocs(q);
 
         const projects = snapshot.docs

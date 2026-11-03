@@ -9,7 +9,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test:rules": "firebase emulators:exec --only firestore,storage --project demo-estateagent-studio \"node --test tests/firebase.rules.test.cjs\""
   },
   "dependencies": {
     "@genkit-ai/google-genai": "^1.16.1",
@@ -72,6 +73,7 @@
     "zustand": "^4.5.4"
   },
   "devDependencies": {
+    "@firebase/rules-unit-testing": "^4.0.1",
     "@types/fs-extra": "^11.0.4",
     "@types/inquirer": "^9.0.7",
     "@types/node": "^20",

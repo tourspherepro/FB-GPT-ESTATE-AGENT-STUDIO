@@ -37,10 +37,16 @@ export async function POST(req: Request) {
     }
 
     const app = getAdminApp();
+    let decoded;
     try {
-      await getAuth(app).verifyIdToken(token);
+      decoded = await getAuth(app).verifyIdToken(token, true);
     } catch {
       return NextResponse.json({ success: false, error: 'Invalid authentication token' }, { status: 401 });
+    }
+
+    // The requester must be explicitly provisioned for this tenant and API.
+    if (typeof decoded.tenantId !== 'string' || !decoded.tenantId || decoded.outlookVoice !== true) {
+      return NextResponse.json({ success: false, error: 'Access denied' }, { status: 403 });
     }
 
     const parsed = CommandSchema.safeParse(await req.json());
@@ -50,6 +56,8 @@ export async function POST(req: Request) {
 
     const doc = await getFirestore(app).collection('outlookCommands').add({
       ...parsed.data,
+      tenantId: decoded.tenantId,
+      userId: decoded.uid,
       status: 'pending',
       createdAt: new Date().toISOString(),
     });

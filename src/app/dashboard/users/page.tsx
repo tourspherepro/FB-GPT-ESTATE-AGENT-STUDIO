@@ -35,7 +35,7 @@ interface UserData {
 }
 
 export default function UserManagementPage() {
-  const { userProfile, loading: authLoading } = useAuth();
+  const { userProfile, effectiveRole, loading: authLoading } = useAuth();
   const { firestore: db } = useFirebase();
   const router = useRouter();
   const { toast } = useToast();
@@ -46,7 +46,7 @@ export default function UserManagementPage() {
 
   useEffect(() => {
     if (!authLoading) {
-      if (!userProfile || userProfile.role !== 'admin') {
+      if (!userProfile || !['admin', 'superadmin'].includes(effectiveRole)) {
         toast({
           variant: 'destructive',
           title: 'Access Denied',
@@ -58,7 +58,7 @@ export default function UserManagementPage() {
   }, [userProfile, authLoading, router, toast]);
 
   useEffect(() => {
-    if (userProfile?.role !== 'admin' || !db) return;
+    if (!['admin', 'superadmin'].includes(effectiveRole) || !db) return;
 
     const usersQuery = query(collection(db, 'users'), orderBy('createdAt', 'desc'));
     const unsubscribe = onSnapshot(usersQuery, 
@@ -87,28 +87,14 @@ export default function UserManagementPage() {
     );
 
     return () => unsubscribe();
-  }, [userProfile, toast, db]);
+  }, [userProfile, effectiveRole, toast, db]);
 
-  const handleRoleChange = (uid: string, newRole: 'admin' | 'user') => {
-    if (!db) return;
-    const userRef = doc(db, 'users', uid);
-    const roleUpdate = { role: newRole };
-    updateDoc(userRef, roleUpdate)
-      .then(() => {
-        toast({
-          title: 'Role Updated',
-          description: `User has been successfully ${newRole === 'admin' ? 'promoted to Admin' : 'demoted to User'}.`,
-        });
-      })
-      .catch((error) => {
-        const permissionError = new FirestorePermissionError({
-          path: userRef.path,
-          operation: 'update',
-          requestResourceData: roleUpdate,
-        });
-        errorEmitter.emit('permission-error', permissionError);
-        // The listener will throw the error, no need to toast here
-      });
+  const handleRoleChange = (_uid: string, _newRole: 'admin' | 'user') => {
+    toast({
+      variant: 'destructive',
+      title: 'Role changes unavailable',
+      description: 'Roles must be provisioned by a trusted server using Firebase custom claims.',
+    });
   };
 
   const confirmDeleteUser = (user: UserData) => {
@@ -123,7 +109,7 @@ export default function UserManagementPage() {
       .then(() => {
         toast({
           title: 'User Deleted',
-          description: `${userToDelete.email} has been permanently removed.`,
+          description: `${userToDelete.email}'s Firestore profile was removed. Their Firebase Auth account still exists.`,
         });
       })
       .catch((error) => {

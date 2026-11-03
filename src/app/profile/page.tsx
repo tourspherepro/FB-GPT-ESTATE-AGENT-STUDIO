@@ -46,7 +46,6 @@ export default function ProfilePage() {
 
     const updatedData = {
       id: userProfile.uid,
-      isAdmin: userProfile.role === 'admin' || userProfile.role === 'superadmin',
       name,
       company,
       telephone,

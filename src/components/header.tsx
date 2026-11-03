@@ -21,7 +21,7 @@ import { cn } from "@/lib/utils";
 export default function Header() {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, userProfile, logout, loading } = useAuth();
+  const { user, userProfile, logout, loading, effectiveRole } = useAuth();
 
   const navItems = [
     { name: "Features", path: "/features" },
@@ -94,7 +94,7 @@ export default function Header() {
                                 <UserIcon className="mr-2 h-4 w-4" />
                                 <span>Profile</span>
                               </DropdownMenuItem>
-                              {userProfile.role === 'admin' && (
+                              {(effectiveRole === 'admin' || effectiveRole === 'superadmin') && (
                                 <DropdownMenuItem onClick={() => router.push('/admin')}>
                                     Admin Settings
                                 </DropdownMenuItem>

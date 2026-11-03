@@ -25,3 +25,14 @@
 ## Phase 2
 
 Audit Firebase configuration and permissions; implement tenant and role isolation and test auth flows before exposing customer data or service endpoints.
+
+## Phase 2: Firebase hardening (in progress, 2026-11-03)
+- Added custom-claim-based platform admin checks; user profile role can no longer grant privileges.
+- Hardened Firestore user profile and project rules and restricted legacy project queries to owner.
+- Added tenant members and tenant-scoped project rules for future team sharing.
+- Restricted private Storage images; migration must rotate legacy download tokens.
+- Restricted Outlook command API to provisioned tenant plus outlookVoice custom claim.
+- Set Firebase CLI project default to demo-estateagent-studio, not the imported upstream project.
+- Added Firebase emulator security tests and GitHub Actions Java 21 CI workflow.
+- Local TypeScript and production build passed; emulator tests pending CI; no Firebase deployment.
+- See docs/FIREBASE-SECURITY.md for deployment requirements and outstanding work.

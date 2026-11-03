@@ -26,7 +26,7 @@ import { useRouter } from "next/navigation";
 
 
 export default function HeaderHome() {
-  const { user, userProfile, loading, logout } = useAuth();
+  const { user, userProfile, loading, logout, effectiveRole } = useAuth();
   const [scrolled, setScrolled] = useState(false);
   const router = useRouter();
 
@@ -99,7 +99,7 @@ export default function HeaderHome() {
                     <UserIcon className="mr-2 h-4 w-4" />
                     <span>Profile</span>
                 </DropdownMenuItem>
-                {userProfile.role === 'admin' && (
+                {(effectiveRole === 'admin' || effectiveRole === 'superadmin') && (
                   <DropdownMenuItem onClick={() => router.push('/admin')}>
                       Admin Settings
                   </DropdownMenuItem>

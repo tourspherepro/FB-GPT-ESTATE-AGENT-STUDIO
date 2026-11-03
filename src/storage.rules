@@ -1,51 +1,62 @@
-
 rules_version = '2';
-
 service firebase.storage {
   match /b/{bucket}/o {
-
-    // Helper function to check for admin role from Firestore
-    function isAdmin() {
-      return request.auth != null &&
-        get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    function signedIn() {
+      return request.auth != null;
+    }
+    function platformAdmin() {
+      return signedIn() && (request.auth.token.admin == true || request.auth.token.superadmin == true);
+    }
+    function owner(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+    function member(tenantId) {
+      return signedIn() &&
+        firestore.exists(/databases/(default)/documents/tenants/$(tenantId)/members/$(request.auth.uid));
     }
 
-    // USER PROFILE IMAGE
-    // Users can read anyone's profile image (if they have the URL).
-    // Users can only write to their own profile image path.
     match /users/{userId}/profile.jpg {
-      allow read: if true;
-      allow write: if request.auth != null && request.auth.uid == userId;
+      allow read: if owner(userId) || platformAdmin();
+      allow write: if owner(userId)
+        && request.resource.size < 5 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
     }
-
-    // PROJECT UPLOADS (Photos + Floorplans from EA Analyse)
-    // Authenticated users can write to a folder under their own user ID.
-    // Anyone can read these files (as they are for public-facing brochures/listings).
+    // Existing EA Analyse paths remain supported but are no longer world-readable.
+    // Firebase download tokens previously issued for these files should be rotated
+    // during migration: Storage Rules do not revoke existing token-based URLs.
     match /projects/{userId}/{fileName} {
-       allow read: if true;
-       allow write: if request.auth != null && request.auth.uid == userId;
+      allow read: if owner(userId);
+      allow write: if owner(userId)
+        && request.resource.size < 20 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
     }
 
-    // COMPANY LOGOS & BRANDING (Admin Only)
-    // Publicly readable, but only admins can upload/change them.
+    match /tenants/{tenantId}/projects/{userId}/{allPaths=**} {
+      allow read: if member(tenantId);
+      allow write: if owner(userId) && member(tenantId)
+        && request.resource.size < 20 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+    }
+
     match /logos/{allPaths=**} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if platformAdmin()
+        && request.resource.size < 5 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
     }
-
     match /branding/{allPaths=**} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if platformAdmin()
+        && request.resource.size < 5 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
     }
-    
-    // PUBLIC 360 PANORAMAS
-    // Allow public read for tours, and authenticated write.
-     match /panoramas/{allPaths=**} {
+    // Panoramas are public website assets. Only trusted admins may publish them.
+    match /panoramas/{allPaths=**} {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow write: if platformAdmin()
+        && request.resource.size < 30 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
     }
-
-    // Default deny all other paths
     match /{allPaths=**} {
       allow read, write: if false;
     }

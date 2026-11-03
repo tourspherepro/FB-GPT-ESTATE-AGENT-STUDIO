@@ -1,9 +1,62 @@
 rules_version = '2';
-
 service firebase.storage {
   match /b/{bucket}/o {
-    // Default deny all access in the root rules file.
-    // Specific rules should be in src/storage.rules
+    function signedIn() {
+      return request.auth != null;
+    }
+    function platformAdmin() {
+      return signedIn() && (request.auth.token.admin == true || request.auth.token.superadmin == true);
+    }
+    function owner(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+    function member(tenantId) {
+      return signedIn() &&
+        firestore.exists(/databases/(default)/documents/tenants/$(tenantId)/members/$(request.auth.uid));
+    }
+
+    match /users/{userId}/profile.jpg {
+      allow read: if owner(userId) || platformAdmin();
+      allow write: if owner(userId)
+        && request.resource.size < 5 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+    }
+    // Existing EA Analyse paths remain supported but are no longer world-readable.
+    // Firebase download tokens previously issued for these files should be rotated
+    // during migration: Storage Rules do not revoke existing token-based URLs.
+    match /projects/{userId}/{fileName} {
+      allow read: if owner(userId);
+      allow write: if owner(userId)
+        && request.resource.size < 20 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+    }
+
+    match /tenants/{tenantId}/projects/{userId}/{allPaths=**} {
+      allow read: if member(tenantId);
+      allow write: if owner(userId) && member(tenantId)
+        && request.resource.size < 20 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+    }
+
+    match /logos/{allPaths=**} {
+      allow read: if true;
+      allow write: if platformAdmin()
+        && request.resource.size < 5 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+    }
+    match /branding/{allPaths=**} {
+      allow read: if true;
+      allow write: if platformAdmin()
+        && request.resource.size < 5 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+    }
+    // Panoramas are public website assets. Only trusted admins may publish them.
+    match /panoramas/{allPaths=**} {
+      allow read: if true;
+      allow write: if platformAdmin()
+        && request.resource.size < 30 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+    }
     match /{allPaths=**} {
       allow read, write: if false;
     }

@@ -85,7 +85,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                     uid: firebaseUser.uid,
                     ...profileData,
                 } as UserProfile);
-                if (profileData.role) setEffectiveRole(profileData.role);
+                // Never promote roles based on user-editable profile data.
+                // Verified Firebase custom claims are the authority.
             } else if (!firebaseUser.isAnonymous) {
                  const newUserProfileData = {
                     id: firebaseUser.uid,

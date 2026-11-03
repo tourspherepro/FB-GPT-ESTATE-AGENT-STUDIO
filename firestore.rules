@@ -1,73 +1,114 @@
-
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // Helper functions
-    function isSignedIn() {
+    function signedIn() {
       return request.auth != null;
     }
-
-    function isOwner(userId) {
-      return isSignedIn() && request.auth.uid == userId;
+    // Privileged roles must be set by a trusted Admin SDK service as custom claims.
+    // A profile document's role is presentation data, never an authority source.
+    function platformAdmin() {
+      return signedIn() && (request.auth.token.admin == true || request.auth.token.superadmin == true);
+    }
+    function platformSuperadmin() {
+      return signedIn() && request.auth.token.superadmin == true;
+    }
+    function owner(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+    function member(tenantId) {
+      return signedIn() &&
+        exists(/databases/$(database)/documents/tenants/$(tenantId)/members/$(request.auth.uid));
+    }
+    function tenantAdmin(tenantId) {
+      return platformAdmin() || (member(tenantId) &&
+        get(/databases/$(database)/documents/tenants/$(tenantId)/members/$(request.auth.uid)).data.role == 'admin');
     }
 
-    function isAdmin() {
-      return isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
-    }
-
-    // USER PROFILES
     match /users/{userId} {
-      // Users can read their own profile. Admins can read any profile.
-      allow get: if isOwner(userId) || isAdmin();
-      // Users can create their own profile.
-      allow create: if isOwner(userId);
-      // Users can update their own profile. Admins can update any profile.
-      allow update: if isOwner(userId) || isAdmin();
-      // Only admins can delete user profiles.
-      allow delete: if isAdmin();
-      // Admins can list all users.
-      allow list: if isAdmin();
+      allow get: if owner(userId) || platformAdmin();
+      allow list: if platformAdmin();
+      // New accounts cannot appoint themselves admins or set entitlements.
+      allow create: if owner(userId)
+        && request.resource.data.role == 'user'
+        && request.resource.data.permissions == []
+        && request.resource.data.keys().hasOnly([
+          'id', 'name', 'email', 'avatar', 'role', 'permissions',
+          'company', 'telephone', 'createdAt'
+        ]);
+      allow update: if (owner(userId)
+        && request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['name', 'avatar', 'company', 'telephone']))
+        || (platformAdmin() && (
+          !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'tenantId'])
+          || platformSuperadmin()
+        ));
+      allow delete: if platformAdmin();
+      match /eaCanvassTemplates/{templateId} {
+        allow read, write: if owner(userId);
+      }
     }
 
-    // USER-GENERATED PROJECTS (from EA Analyse & Describe)
+    // Legacy private projects: only the creating account can read/list them.
+    // Do not allow admins to browse other agencies' projects by default.
     match /projects/{projectId} {
-      // A user can create a project.
-      allow create: if isSignedIn();
-      // A user can read, update, or delete a project they created. Admins can do anything.
-      allow read, update, delete: if (resource.data.userId == request.auth.uid) || isAdmin();
-      // Users can only list their own projects.
-      allow list: if isSignedIn();
+      allow create: if signedIn() && request.resource.data.userId == request.auth.uid;
+      allow get, list, delete: if signedIn() && resource.data.userId == request.auth.uid;
+      allow update: if signedIn() && resource.data.userId == request.auth.uid
+        && request.resource.data.userId == resource.data.userId
+        && request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['projectName', 'address', 'postcode', 'propertyType',
+               'bedrooms', 'receptionRooms', 'bathrooms', 'councilTaxBand',
+               'purchaseStyles', 'adHighlights', 'adDescription', 'localSummary',
+               'measurements', 'roomDescriptions', 'epcData', 'conservationData',
+               'valuationReport', 'propertyPhotoUrls', 'floorplanUrl', 'brochureContent']);
     }
 
-    // SETTINGS collections (e.g., room types) - read for all, write for admin
-    match /settings_{collection}/{docId} {
-      allow read: if isSignedIn();
-      allow write: if isAdmin();
+    // Tenant document structure for new shared-agency features.
+    // Membership is created by an authenticated platform provisioning service.
+    match /tenants/{tenantId} {
+      allow get: if member(tenantId) || platformAdmin();
+      allow list, create, update, delete: if platformSuperadmin();
+      match /members/{memberId} {
+        allow get: if (memberId == request.auth.uid && signedIn()) || tenantAdmin(tenantId);
+        allow list: if tenantAdmin(tenantId);
+        allow create, update, delete: if platformSuperadmin();
+      }
+      match /projects/{projectId} {
+        allow get, list: if member(tenantId);
+        allow create: if member(tenantId)
+          && request.resource.data.tenantId == tenantId
+          && request.resource.data.userId == request.auth.uid;
+        allow update: if member(tenantId)
+          && resource.data.tenantId == tenantId
+          && request.resource.data.tenantId == tenantId
+          && request.resource.data.userId == resource.data.userId;
+        allow delete: if tenantAdmin(tenantId) ||
+          (member(tenantId) && resource.data.userId == request.auth.uid);
+      }
     }
 
-    // SITE CONTENT (e.g., homepage hero) - public read, admin write
+    match /companies/{companyId} {
+      allow read, write: if platformAdmin();
+    }
+    match /{settingsCollection}/{docId} {
+      allow read: if settingsCollection.matches('settings_.*') && signedIn();
+      allow write: if settingsCollection.matches('settings_.*') && platformAdmin();
+    }
     match /site_content/{docId} {
-      allow get, list: if true;
-      allow write: if isAdmin();
+      allow read: if true;
+      allow write: if platformAdmin();
     }
-    
-    // PRICING PLANS & CTA - public read, admin write
     match /pricingPlans/{planId} {
-       allow get, list: if true;
-       allow write: if isAdmin();
+      allow read: if true;
+      allow write: if platformAdmin();
     }
-     match /ctaSection/{docId} {
-       allow get, list: if true;
-       allow write: if isAdmin();
+    match /ctaSection/{docId} {
+      allow read: if true;
+      allow write: if platformAdmin();
     }
-    
-    // USER REQUESTS - deny all client access, handled by server functions
     match /userRequests/{requestId} {
       allow read, write: if false;
     }
-
-    // Default deny all other collections
     match /{document=**} {
       allow read, write: if false;
     }
