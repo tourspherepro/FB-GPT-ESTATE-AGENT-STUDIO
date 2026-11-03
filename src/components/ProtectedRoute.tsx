@@ -11,14 +11,14 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
-  const { user, loading, isDesignMode } = useAuth();
+  const { user, loading } = useAuth();
   const router = useRouter();
 
   React.useEffect(() => {
-    if (!loading && !user && !isDesignMode) {
+    if (!loading && !user) {
       router.push('/login');
     }
-  }, [user, loading, isDesignMode, router]);
+  }, [user, loading, router]);
 
   if (loading) {
     return (
@@ -28,7 +28,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
     );
   }
 
-  if (!user && !isDesignMode) {
+  if (!user) {
     return null; // or a loading spinner, but useEffect handles redirection
   }
 

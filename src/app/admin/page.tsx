@@ -136,7 +136,7 @@ function roleToRadio(role: Role | undefined): "admin" | "user" {
 export default function AdminPage() {
   const router = useRouter();
   const { toast } = useToast();
-  const { user: authUser, effectiveRole, loading: authLoading, isDesignMode } = useAuth();
+  const { user: authUser, effectiveRole, loading: authLoading } = useAuth();
   const { firestore: db, storage, functions } = useFirebase();
   
   const [activeTab, setActiveTab] = useState('user-requests');
@@ -292,7 +292,7 @@ export default function AdminPage() {
 
 
   useEffect(() => {
-    if (isDesignMode || (effectiveRole !== 'admin' && effectiveRole !== 'superadmin') || !db) return;
+    if (effectiveRole !== 'admin' && effectiveRole !== 'superadmin' || !db) return;
 
     setIsTypesLoading(true);
     const propTypesQuery = query(collection(db, 'settings_propertyTypes'), orderBy('name'));
@@ -341,7 +341,7 @@ export default function AdminPage() {
 
 
   useEffect(() => {
-    if (isDesignMode || (effectiveRole !== 'admin' && effectiveRole !== 'superadmin') || !db) return;
+    if (effectiveRole !== 'admin' && effectiveRole !== 'superadmin' || !db) return;
 
     const fetchBrandingContent = async () => {
         const docRef = doc(db, 'site_content', 'branding');
@@ -361,7 +361,7 @@ export default function AdminPage() {
 
 
   useEffect(() => {
-    if (isDesignMode || (effectiveRole !== 'admin' && effectiveRole !== 'superadmin') || !db) return;
+    if (effectiveRole !== 'admin' && effectiveRole !== 'superadmin' || !db) return;
 
     const fetchPricingContent = () => {
         const plansQuery = query(collection(db, 'pricingPlans'));
@@ -401,7 +401,7 @@ export default function AdminPage() {
 
   
   useEffect(() => {
-    if (isDesignMode || (effectiveRole !== 'admin' && effectiveRole !== 'superadmin') || !db) return;
+    if (effectiveRole !== 'admin' && effectiveRole !== 'superadmin' || !db) return;
 
     const fetchHeroContent = async () => {
       setIsHeroLoading(true);
@@ -439,7 +439,7 @@ export default function AdminPage() {
 
 
     useEffect(() => {
-        if (isDesignMode || (effectiveRole !== 'admin' && effectiveRole !== 'superadmin') || !db) {
+        if (effectiveRole !== 'admin' && effectiveRole !== 'superadmin' || !db) {
             setIsLoading(false);
             return;
         }

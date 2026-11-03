@@ -9,7 +9,7 @@ import React from 'react';
 export function ClientLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isHome = pathname === "/";
-  const noHeader = ["/login", "/signup", "/tour", "/forgot-password", "/preview", "/design"];
+  const noHeader = ["/login", "/signup", "/tour", "/forgot-password"];
 
   let header = null;
   if (isHome) {

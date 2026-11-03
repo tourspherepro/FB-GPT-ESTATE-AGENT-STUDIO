@@ -82,16 +82,6 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <Button asChild variant="outline" className="h-12 rounded-full border-sky-500 bg-white text-sky-700 font-semibold hover:bg-sky-50">
-              <a href="/design/user">Open User Dashboard</a>
-            </Button>
-            <Button asChild variant="outline" className="h-12 rounded-full border-sky-500 bg-white text-sky-700 font-semibold hover:bg-sky-50">
-              <a href="/design/admin">Open Admin Dashboard</a>
-            </Button>
-          </div>
-          <p className="mt-2 text-center text-xs text-slate-500">Local design mode only. Live data and saving require sign-in.</p>
-
           <div className="mt-10 text-center">
             <p className="text-sm font-medium text-slate-600">
               Don't have an account? <Link href="/signup" className="text-sky-600 font-bold hover:underline">Sign up</Link>
