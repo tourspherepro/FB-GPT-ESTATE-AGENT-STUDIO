@@ -16,6 +16,7 @@ import { useToast } from '@/hooks/use-toast';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { useFirebase } from '@/firebase';
+import { getLocalDesignRole } from '@/lib/design-mode';
 
 type Role = "superadmin" | "admin" | "staff" | "user" | "agent";
 
@@ -36,6 +37,7 @@ interface AuthContextType {
   loading: boolean;
   profileLoading: boolean;
   effectiveRole: Role;
+  isDesignMode: boolean;
   signup: (email: string, password: string, fullName: string) => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
@@ -53,9 +55,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [effectiveRole, setEffectiveRole] = useState<Role>('user');
   const router = useRouter();
   const pathname = usePathname();
+  const designRole = getLocalDesignRole(pathname);
+  const isDesignMode = designRole !== null;
   const { toast } = useToast();
 
   useEffect(() => {
+    if (designRole) {
+      setUser(null);
+      setEffectiveRole(designRole);
+      setUserProfile({
+        uid: 'local-design-only',
+        name: designRole === 'admin' ? 'Design Administrator' : 'Design User',
+        email: null,
+        avatar: null,
+        role: designRole,
+        permissions: ['all'],
+        company: 'Example Estate Agency',
+        telephone: '',
+      });
+      setLoading(false);
+      setProfileLoading(false);
+      return;
+    }
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         setUser(firebaseUser);
@@ -132,7 +153,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
 
     return () => unsubscribe();
-  }, [auth, db, router, pathname]);
+  }, [auth, db, router, pathname, designRole]);
   
   const signup = async (email: string, password: string, fullName: string) => {
     setLoading(true);
@@ -188,7 +209,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       userProfile, 
       loading, 
       profileLoading, 
-      effectiveRole, 
+      effectiveRole,
+      isDesignMode,
       signup, 
       login, 
       logout, 

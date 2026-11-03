@@ -187,9 +187,9 @@ function DashboardContent() {
 }
 
 export default function DashboardPage() {
-  const { loading, user } = useAuth();
+  const { loading, user, isDesignMode } = useAuth();
 
-  if (loading || !user) {
+  if (loading || (!user && !isDesignMode)) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-slate-50">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
