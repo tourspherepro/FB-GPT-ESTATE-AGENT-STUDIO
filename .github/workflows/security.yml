@@ -1,7 +1,7 @@
 name: Foundation and Firebase security tests
 on:
   push:
-    branches: [main, 'fix/**']
+    branches: [main, 'fix/**', 'deploy/**']
   pull_request:
     branches: [main]
 permissions:
